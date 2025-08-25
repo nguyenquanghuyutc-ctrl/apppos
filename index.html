@@ -107,7 +107,12 @@
 
     <div class="bill-container" id="bill-container">
         <div class="company-header">
-            <div class="company-identity"> <img id="logo-img" src="https://lh3.googleusercontent.com/d/1v1mA3FAx60G9MPbNxB43J2V4tunOIiTz" alt="Logo" class="logo" crossorigin="anonymous">
+            <div class="company-identity"> <img id="logo-img" 
+     src="https://lh3.googleusercontent.com/d/1v1mA3FAx60G9MPbNxB43J2V4tunOIiTz" 
+     alt="Logo" 
+     class="logo" 
+     style="width: 150px; height: auto;" 
+     crossorigin="anonymous">
                 <div class="company-details">
                     <div class="company-name" id="ten_cong_ty"></div>
                     <div class="company-info"> ĐC: <span id="dia_chi"></span><br> ĐT: <span id="so_dien_thoai"></span> | <span class="label-email">Email: </span><span id="email"></span> </div>
@@ -216,7 +221,7 @@
             const demoProducts = [ { sanpham: "Phần mềm quản lý bán hàng", dvt: "Gói", soluong: 1, dongia: "3500000", thanhtien: "3500000", ghi_chu: "Bản quyền vĩnh viễn" }, { sanpham: "Dịch vụ hỗ trợ kỹ thuật", dvt: "Năm", soluong: 1, dongia: "1200000", thanhtien: "1200000", ghi_chu: "" }, { sanpham: "Tích hợp cổng thanh toán", dvt: "Lần", soluong: 1, dongia: "1000000", thanhtien: "1000000", ghi_chu: "" }, ];
             const subtotal = 5700000; const discount = 200000; const totalAfterDiscount = subtotal - discount; const vatPercent = "8%"; const vatAmount = totalAfterDiscount * 0.08; const totalAfterVat = totalAfterDiscount + vatAmount;
             const data = {
-                tenCongTy: 'CÔNG TY TNHH GIẢI PHÁP SỐ EMS', diaChi: '93/4 Liên khu 5-6, P. Bình Tân, TP.HCM', soDienThoai: '0903375265', email: 'nguyentanhien87@gmail.com', website: 'www.gpems.net',
+                tenCongTy: 'CÔNG TY TNHH CHẾ BIẾN HẢI SẢN BA LÀNG', diaChi: 'Số 05, đường Đỗ Đại, TDP Thượng Hải, phường Tĩnh Gia, Thanh Hóa', soDienThoai: '0976459995', email: 'balangth@balang.com.vn', website: 'www.balang.com.vn',
                 orderNumber: 'DEMO-EMS-001', orderDate: new Date().toISOString(), customerName: 'Khách hàng Demo', diaChiKhachHang: '25/10 Hậu Giang, Phường 4, Quận Tân Bình, TP.HCM',
                 subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(), vatPercent: vatPercent, vatAmount: vatAmount.toString(), totalAfterVat: totalAfterVat.toString(),
                 notes: 'MST: 0316870151. Đại diện pháp luật: Nguyễn Tấn Hiền.', productsJson: encodeURIComponent(JSON.stringify(demoProducts)),

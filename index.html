@@ -109,16 +109,19 @@
         .format-a4 .total-row, .format-a4 .total-final { padding: 10px; }
         .format-a4 .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
-        /* === NEW SIGNATURES SECTION === */
+        /* === SIGNATURES SECTION (ADJUSTED) === */
         .signatures-section { display: none; } /* Hide by default */
         .format-a4 .signatures-section {
             display: flex;
             justify-content: space-around;
             text-align: center;
-            margin-top: 60px;
-            padding-bottom: 30px;
+            margin-top: 40px; /* Space above the signature blocks */
+            padding-bottom: 20px;
             z-index: 2;
             position: relative;
+        }
+        .signature-box {
+            min-height: 90px; /* This creates the vertical space for signing */
         }
         .signature-box .signature-title {
             font-weight: bold;
@@ -129,7 +132,7 @@
             font-size: 0.8em;
             color: #666;
         }
-        /* === END OF NEW SECTION === */
+        /* === END OF SECTION === */
 
         /* --- A5 SPECIFIC FORMAT --- */
         body.format-a5 { font-size: 8pt; }
@@ -232,7 +235,6 @@
             </div>
         </div>
 
-        <!-- === NEW SIGNATURES SECTION (HTML) === -->
         <div class="signatures-section">
             <div class="signature-box">
                 <div class="signature-title">XUẤT KHO</div>
@@ -247,7 +249,6 @@
                 <div class="signature-note">(Ký, ghi rõ họ tên)</div>
             </div>
         </div>
-        <!-- === END OF NEW SECTION === -->
 
         <div class="footer"> <div>Cảm ơn quý khách đã sử dụng dịch vụ!</div> <div>Hotline: <span id="footer_so_dien_thoai"></span> | Website: <span id="website"></span></div> </div>
     </div>

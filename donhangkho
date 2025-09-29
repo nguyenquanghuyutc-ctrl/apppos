@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Hóa đơn</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; transition: opacity 0.3s; }
+        .spinner { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { opacity: 0; pointer-events: none; }
+        .demo-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 8vw; line-height: 1.1; color: rgba(255, 0, 0, 0.08); font-weight: bold; text-transform: uppercase; text-align: center; z-index: 1; pointer-events: none; white-space: nowrap; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white !important; margin: 0 !important; padding: 0 !important; overflow: hidden; }
+            .no-print, #loading-overlay { display: none !important; }
+            .bill-container { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; border: none !important; page-break-inside: avoid; position: relative; }
+            .demo-watermark { display: none; }
+            @page { margin: 0; } @page a4-portrait { size: A4 portrait; margin: 8mm; } @page a5-landscape { size: A5 landscape; margin: 5mm; } @page receipt-80mm { size: 80mm auto; margin: 0; }
+            body.format-a4 { page: a4-portrait; } body.format-a5 { page: a5-landscape; } body.format-80mm { page: receipt-80mm; }
+            * { page-break-before: avoid; page-break-after: avoid; }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #eee; }
+        .bill-container { background: white; color: #333; position: relative; visibility: hidden; }
+        .text-right { text-align: right; } .text-center { text-align: center; } .text-bold { font-weight: bold; } .company-name { font-weight: bold; }
+        .error-message { color: red; font-size: 0.8em; padding: 10px; border: 1px dashed red; }
+        .print-options { position: fixed; top: 10px; right: 10px; background: #f0f0f0; padding: 10px; border: 1px solid #ccc; border-radius: 8px; z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 8px; }
+        .options-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .print-options button { margin: 0; padding: 8px 12px; height: 44px; cursor: pointer; border: none; border-radius: 5px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; gap: 8px; }
+        .print-options button:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.3); transform: translateY(-2px); filter: brightness(1.1); }
+        .print-options button.btn-80mm { background-color: #007bff; } .print-options button.btn-a4 { background-color: #28a745; } .print-options button.btn-a5 { background-color: #ffc107; } .print-options button.btn-print { background-color: #6c757d; } .print-options button.btn-pdf { background-color: #dc3545; }
+        .icon { display: block; background: white; border: 2px solid white; border-radius: 2px; } .icon-a4 { width: 14px; height: 20px; } .icon-a5 { width: 20px; height: 14px; }
+        .icon-print { position: relative; width: 24px; height: 22px; } .icon-print .printer-top { position: absolute; top: 0; left: 2px; width: 20px; height: 8px; border: 2px solid white; border-bottom: none; } .icon-print .printer-body { position: absolute; bottom: 0; left: 0; width: 24px; height: 12px; background: white; border-radius: 2px; } .icon-print .paper { position: absolute; top: 4px; left: 6px; width: 12px; height: 4px; background: #eee; }
+        .product-note { font-size: 0.9em; color: #555; font-style: italic; }
+        .products-table { width: 100%; border-collapse: collapse; }
+        .company-identity { display: flex; align-items: center; gap: 15px; }
+
+        /* --- 80mm RECEIPT FORMAT --- */
+        body.format-80mm { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; color: #000; }
+        .format-80mm .bill-container { padding: 3mm; }
+        .format-80mm .company-header { display: flex; align-items: flex-start; justify-content: space-between; text-align: left; border-bottom: 1px dashed #000; padding-bottom: 5px; gap: 3px; }
+        .format-80mm .company-identity { gap: 8px; flex-grow: 1; min-width: 0; }
+        .format-80mm .logo { max-width: 40px; }
+        .format-80mm .company-details { flex-grow: 1; min-width: 0; }
+        .format-80mm .company-name { font-size: 11px; white-space: normal; line-height: 1.1; font-weight: bold; }
+        .format-80mm .company-info { font-size: 8px; line-height: 1.2; }
+        .format-80mm .order-qr-code { display: block; flex-shrink: 0; }
+        .format-80mm .order-qr-code img { width: 32px; height: 32px; }
+        .format-80mm .label-email { display: none; }
+        .format-80mm .main-title-container { text-align: center; font-size: 18px; font-weight: bold; margin: 15px 0; } .format-80mm .order-number-subtitle { font-size: 11px; text-align: center; margin-top: -10px; margin-bottom: 10px;} .format-80mm .customer-details { margin-bottom: 15px; font-size: 11px; }
+        .format-80mm .customer-address-row { display: none; }
+        .format-80mm .customer-details-row { display: flex; justify-content: space-between; margin-bottom: 3px; } .format-80mm .row-stack-on-receipt { display: block; } .format-80mm .row-stack-on-receipt > span { display: block; margin-bottom: 3px; } .format-80mm .products-table { font-size: 10px; } .format-80mm .products-table th, .format-80mm .products-table td { padding: 3px 2px; border-bottom: 1px solid #ddd; word-break: break-all; text-align: left;}
+        .format-80mm .col-stt, .format-80mm .col-msp, .format-80mm .col-dvt, .format-80mm .col-ghi-chu { display: none; }
+        .format-80mm .products-table .col-sanpham[data-msp]:before { content: attr(data-msp) " | "; font-weight: bold; }
+        .format-80mm .products-table .col-sanpham[data-msp=""]::before { content: ""; }
+        .format-80mm .products-table th.col-soluong, .format-80mm .products-table th.col-soluongL { font-size: 0; }
+        .format-80mm .products-table th.col-soluong::before { content: "SL"; font-size: 10px; }
+        .format-80mm .products-table th.col-soluongL::before { content: "Lẻ"; font-size: 10px; }
+        .format-80mm .products-table .col-soluong, .format-80mm .products-table .col-soluongL { width: 12%; text-align: center; }
+        .format-80mm .products-table .col-dongia, .format-80mm .products-table .col-thanhtien { width: 22%; text-align: right; }
+        .format-80mm .products-table th { border-bottom-width: 1px; border-color: #000; text-align: center; }
+        .format-80mm .products-table th.col-sanpham { text-align: left; }
+        .format-80mm .products-table th.col-dongia, .format-80mm .products-table th.col-thanhtien { font-size: 0; line-height: 1.1; text-align: right; vertical-align: middle; }
+        .format-80mm .products-table th.col-dongia::before { content: "Đơn\AGiá"; font-size: 10px; white-space: pre; }
+        .format-80mm .products-table th.col-thanhtien::before { content: "Thành\ATiền"; font-size: 10px; white-space: pre; }
+        .format-80mm .bottom-section { display: block; } .format-80mm .left-bottom-section, .format-80mm .right-bottom-section { width: 100%; } .format-80mm .totals-box { border-top: 1px dashed #000; padding-top: 10px; } .format-80mm .total-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 11px; align-items: center; } .format-80mm .total-final { font-weight: bold; font-size: 13px; border-top: 1px solid #000; padding-top: 5px; } .format-80mm .amount-in-words { font-size: 10px; font-style: italic; margin-top: 5px; text-align: center; } .format-80mm .notes-section { margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 10px; } .format-80mm .payment-section { margin-top: 15px; text-align: center; } .format-80mm .qr-code { margin-top: 5px; } .format-80mm .qr-code img { width: 180px; height: 180px; } .format-80mm .footer { text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; }
+
+        /* --- A4 & A5 SHARED FORMATS --- */
+        body.format-a4, body.format-a5 { font-family: Arial, sans-serif; }
+        .format-a4 .bill-container, .format-a5 .bill-container { margin: 20px auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .format-a4 .company-header, .format-a5 .company-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding-bottom: 5px; border-bottom: 1px solid #ccc; z-index: 2; position: relative; }
+        .format-a4 .logo, .format-a5 .logo { max-width: 60px; } .format-a4 .company-name, .format-a5 .company-name { font-size: 1.6em; color: #0056b3; } .format-a4 .main-title-container, .format-a5 .main-title-container { text-align: center; letter-spacing: 2px; color: #333; z-index: 2; position: relative; }
+        .order-number-subtitle { text-align: center; font-size: 0.9em; color: #555; margin-bottom: 15px; } .format-a4 .customer-details, .format-a5 .customer-details { margin-bottom: 10px; margin-top: 10px; z-index: 2; position: relative; } .format-a4 .customer-details-row, .format-a5 .customer-details-row { display: flex; justify-content: space-between; padding: 3px 0; } .customer-address-row { padding: 3px 0; }
+        .format-a4 .row-stack-on-receipt, .format-a5 .row-stack-on-receipt { display: none; }
+        .format-a4 .products-table, .format-a5 .products-table { border: 0.5pt solid #ccc; border-radius: 0; border-collapse: collapse; overflow: hidden; z-index: 2; position: relative; }
+        .format-a4 .products-table th, .format-a4 .products-table td, .format-a5 .products-table th, .format-a5 .products-table td { border: 0.5pt solid #ccc; vertical-align: top; }
+        .format-a4 .products-table thead tr, .format-a5 .products-table thead tr { background-color: #d6eaf8; color: #333; }
+        .format-a4 .products-table th, .format-a5 .products-table th { text-transform: uppercase; font-size: 0.85em; white-space: nowrap; }
+        .format-a4 .products-table tbody tr:nth-child(even), .format-a5 .products-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        .format-a4 .products-table .col-stt, .format-a5 .products-table .col-stt { width: 4%; text-align: center; }
+        .format-a4 .products-table .col-msp, .format-a5 .products-table .col-msp { width: 12%; }
+        .format-a4 .products-table .col-dvt, .format-a5 .products-table .col-dvt { width: 6%; text-align: center; }
+        .format-a4 .products-table .col-soluong, .format-a5 .products-table .col-soluong { width: 7%; text-align: center; }
+        .format-a4 .products-table .col-soluongL, .format-a5 .products-table .col-soluongL { width: 7%; text-align: center; }
+        .format-a4 .products-table .col-dongia, .format-a5 .products-table .col-dongia { width: 13%; text-align: right; }
+        .format-a4 .products-table .col-thanhtien, .format-a5 .products-table .col-thanhtien { width: 14%; text-align: right; }
+        .format-a4 .products-table .col-ghi-chu, .format-a5 .products-table .col-ghi-chu { width: 12%; }
+        .format-a4 .bottom-section, .format-a5 .bottom-section { display: flex; justify-content: space-between; z-index: 2; position: relative; }
+        .format-a4 .left-bottom-section, .format-a5 .left-bottom-section { width: 40%; text-align: center; } .format-a4 .right-bottom-section, .format-a5 .right-bottom-section { width: 60%; } .format-a4 .totals-box, .format-a5 .totals-box { width: 100%; } .format-a4 .total-row, .format-a5 .total-row { border-bottom: 1px solid #eee; display: flex; justify-content: space-between; } .format-a4 .total-row span:first-child, .format-a5 .total-row span:first-child { color: #555; } .format-a4 .total-final, .format-a5 .total-final { display: flex; justify-content: space-between; background-color: #f8f9fa; } .format-a4 .total-final span, .format-a5 .total-final span { font-size: 1.2em; font-weight: bold; color: #0056b3; }
+        .format-a4 .notes-section, .format-a5 .notes-section { margin-top: 20px; font-style: italic; font-size: 0.9em; text-align: left; }
+        .format-a4 .footer, .format-a5 .footer { clear: both; z-index: 2; position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .format-a4 .order-qr-code img, .format-a5 .order-qr-code img { width: 64px; height: 64px; }
+
+        /* --- A4 SPECIFIC FORMAT --- */
+        body.format-a4 { font-size: 10pt; }
+        .format-a4 .bill-container { max-width: 190mm; min-height: 280mm; padding: 10pt; }
+        .format-a4 .main-title-container { font-size: 2em; font-weight: bold; margin: 15px 0 0 0; }
+        .format-a4 .products-table { font-size: 0.9em; }
+        .format-a4 .products-table th, .format-a4 .products-table td { padding: 8px 10px; }
+        .format-a4 .bottom-section { margin-top: 20px; gap: 30px; }
+        .format-a4 .qr-code img { width: 140px; height: 140px; }
+        .format-a4 .total-row, .format-a4 .total-final { padding: 10px; }
+        .format-a4 .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
+        
+        /* === SIGNATURES SECTION === */
+        .signatures-section { display: none; } 
+        .format-a4 .signatures-section { display: flex; justify-content: space-around; text-align: center; margin-top: 40px; padding-bottom: 20px; z-index: 2; position: relative; }
+        .signature-box { min-height: 90px; }
+        .signature-box .signature-title { font-weight: bold; margin-bottom: 5px; }
+        .signature-box .signature-note { font-style: italic; font-size: 0.8em; color: #666; }
+
+        /* --- A5 SPECIFIC FORMAT --- */
+        body.format-a5 { font-size: 8pt; }
+        .format-a5 .bill-container { padding: 5pt; }
+        .format-a5 .main-title-container { font-size: 1.8em; font-weight: bold; margin: 10px 0 0 0; }
+        .format-a5 .customer-details-row, .customer-address-row { padding: 1px 0; }
+        .format-a5 .products-table { font-size: 1em; }
+        .format-a5 .products-table th, .format-a5 .products-table td { padding: 4px 5px; }
+        .format-a5 .bottom-section { margin-top: 10px; gap: 20px; }
+        .format-a5 .qr-code img { width: 110px; height: 110px; }
+        .format-a5 .total-row, .format-a5 .total-final { padding: 4px; }
+        .format-a5 .notes-section { margin-top: 10px; }
+        .format-a5 .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 0.85em; color: #777; }
+
+        /* --- EXPORT & RESPONSIVE --- */
+        body.export-mode { background: white !important; } .export-mode .bill-container { margin: 0 auto !important; box-shadow: none !important; border: none !important; } .export-mode.format-a4 .bill-container { padding: 10pt !important; } .export-mode.format-a5 .bill-container { padding: 5pt !important; } .export-mode.format-80mm .bill-container { padding: 3mm !important; } .export-mode .demo-watermark { display: block !important; }
+        @media (max-width: 768px) {
+            .print-options { top: 5px; right: 5px; gap: 8px; }
+            .options-row { display: contents; }
+            .print-options button { padding: 7px 10px; height: 40px; font-size: 13px; gap: 7px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay"><div class="spinner"></div></div>
+
+    <div class="print-options no-print">
+        <div class="options-row"> <button class="btn-80mm" onclick="changeFormat('80mm')">80mm</button> <button class="btn-a4" onclick="changeFormat('a4')" title="Khổ A4 dọc">A4<span class="icon icon-a4"></span></button> <button class="btn-a5" onclick="changeFormat('a5')" title="Khổ A5 ngang">A5<span class="icon icon-a5"></span></button> </div>
+        <div class="options-row"> <button class="btn-print" onclick="window.print()" title="In Hóa Đơn"><div class="icon-print"><div class="paper"></div><div class="printer-top"></div><div class="printer-body"></div></div></button> <button class="btn-pdf" onclick="downloadPDF()" title="Tải về file PDF"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1m-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0"/></svg></button> </div>
+    </div>
+
+    <div class="bill-container" id="bill-container">
+        <div class="company-header">
+            <div class="company-identity"> <img id="logo-img"
+      src="https://lh3.googleusercontent.com/d/1zoGaStR06GVpj2l5SU_IhV__6MJRm1YC"
+      alt="Logo"
+      class="logo"
+      style="width: 180px; height: auto;"
+      crossorigin="anonymous">
+                <div class="company-details">
+                    <div class="company-name" id="ten_cong_ty"></div>
+                    <div class="company-info"> ĐC: <span id="dia_chi"></span><br> ĐT: <span id="so_dien_thoai"></span> | <span class="label-email">Email: </span><span id="email"></span> </div>
+                </div>
+            </div>
+            <div class="order-qr-code" id="order-qr-code"></div>
+        </div>
+        <div class="invoice-body">
+            <div class="main-title-container" id="main-title">HÓA ĐƠN BÁN HÀNG</div>
+            <div class="order-number-subtitle"> <span class="text-bold">Số Đơn Hàng:</span> <span id="order-number"></span> </div>
+            <div class="customer-details">
+                <div class="customer-details-row">
+                    <span><span class="text-bold">Khách Hàng:</span> <span id="customer-name"></span></span>
+                    <span><span class="text-bold">Ngày Đặt:</span> <span id="order-date"></span></span>
+                </div>
+                <div class="customer-address-row">
+                    <span><span class="text-bold">Địa chỉ:</span> <span id="customer-address"></span></span>
+                </div>
+                <div class="customer-details-row row-stack-on-receipt">
+                    <span></span>
+                    <span><span class="text-bold">In Lúc:</span> <span id="print-time"></span></span>
+                </div>
+            </div>
+            <table class="products-table">
+                <thead>
+                    <tr>
+                        <th class="col-stt">STT</th>
+                        <th class="col-msp">MSP</th>
+                        <th class="col-sanpham">Sản Phẩm</th>
+                        <th class="col-dvt">ĐVT</th>
+                        <th class="col-soluong">SL</th>
+                        <th class="col-soluongL">SL Lẻ</th>
+                        <th class="col-dongia">Đơn Giá</th>
+                        <th class="col-thanhtien">Thành Tiền</th>
+                        <th class="col-ghi-chu">Ghi Chú</th>
+                    </tr>
+                </thead>
+                <tbody id="products-list"></tbody>
+            </table>
+            <div class="bottom-section">
+                <div class="left-bottom-section">
+                    <div class="payment-section">
+                        <div class="payment-details"><div class="text-bold">QUÉT MÃ QR ĐỂ THANH TOÁN</div></div>
+                        <div class="qr-code" id="qr-code-container"></div>
+                        <div class="qr-info" style="display: none;"><span id="bank-name"></span> / <span id="account-number"></span> / <span id="account-holder"></span></div>
+                    </div>
+                    <div class="notes-section" id="notes-container"><span class="text-bold">Ghi Chú Chung:</span> <span id="ghi_chu"></span></div>
+                </div>
+                <div class="right-bottom-section">
+                    <div class="summary-section">
+                        <div class="totals-box">
+                            <div class="total-row"><span>Thành Tiền:</span><span id="subtotal" class="text-right"></span></div>
+                            <div class="total-row"><span>Giảm Giá:</span><span id="discount" class="text-right"></span></div>
+                            <div class="total-row"><span>Tổng Tiền Sau Chiết Khấu:</span><span id="total-after-discount" class="text-right"></span></div>
+                            <div class="total-row" id="vat-row"><span>VAT (<span id="vat-percent"></span>):</span><span id="vat-amount" class="text-right"></span></div>
+                            <div class="total-row total-final"><span>Phải Thanh Toán:</span><span id="total-after-vat" class="text-right text-bold"></span></div>
+                            <div class="amount-in-words"><span class="text-bold">Bằng Chữ:</span> <span id="amount-words"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="signatures-section">
+            <div class="signature-box">
+                <div class="signature-title">XUẤT KHO</div>
+                <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">GIAO HÀNG</div>
+                <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-title">KHÁCH HÀNG</div>
+                <div class="signature-note">(Ký, ghi rõ họ tên)</div>
+            </div>
+        </div>
+
+        <div class="footer"> <div>Cảm ơn quý khách đã sử dụng dịch vụ!</div> <div>Hotline: <span id="footer_so_dien_thoai"></span> | Website: <span id="website"></span></div> </div>
+    </div>
+
+    <script>
+        async function convertImageToBase64(imgElement) { if (!imgElement || !imgElement.src || imgElement.src.startsWith('data:image')) { return; } const originalSrc = imgElement.src; const processBlob = (blob) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onloadend = () => { imgElement.src = reader.result; resolve(reader.result); }; reader.onerror = reject; reader.readAsDataURL(blob); }); try { const response = await fetch(originalSrc); if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); await processBlob(await response.blob()); } catch (error) { console.warn(`Direct image fetch failed, trying proxy. Error: ${error.message}`); const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(originalSrc)}`; try { const proxyResponse = await fetch(proxyUrl); if (!proxyResponse.ok) throw new Error(`Proxy HTTP error! status: ${proxyResponse.status}`); await processBlob(await proxyResponse.blob()); } catch (proxyError) { console.error(`Failed to fetch image via proxy. Error: ${proxyError.message}`); } } }
+        async function downloadPDF() { const element = document.querySelector('.bill-container'); const printOptionsPanel = document.querySelector('.print-options'); const orderNumber = document.getElementById('order-number').textContent || 'unknown'; const filename = `HoaDon-${orderNumber}.pdf`; printOptionsPanel.style.display = 'none'; document.body.classList.add('export-mode'); const allImages = Array.from(document.querySelectorAll('#logo-img, #qr-code-container img, #order-qr-code img')); await Promise.all(allImages.map(img => convertImageToBase64(img))); let jspdfConfig = { unit: 'mm', format: 'a4', orientation: 'portrait' }; if (document.body.classList.contains('format-a5')) { jspdfConfig = { unit: 'mm', format: 'a5', orientation: 'landscape' }; } else if (document.body.classList.contains('format-80mm')) { jspdfConfig = { unit: 'mm', format: [80, 297], orientation: 'portrait' }; } const opt = { margin: 0, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff' }, jsPDF: jspdfConfig, pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } }; try { await html2pdf().from(element).set(opt).save(); } catch (error) { console.error("Error creating PDF:", error); alert("Đã có lỗi xảy ra khi tạo file PDF. Vui lòng thử lại."); } finally { document.body.classList.remove('export-mode'); printOptionsPanel.style.display = 'flex'; } }
+        function getUrlParameter(name) { const urlParams = new URLSearchParams(window.location.search); return urlParams.get(name) || ''; }
+        function cleanNumberString(s) { if (typeof s !== 'string') return String(s); return s.replace(/,/g, ''); }
+        function getBankCodeFromName(bankName) { if (!bankName) return null; const bankMap = { 'vietinbank': '970415', 'vtb': '970415', 'vcb': '970436', 'vietcombank': '970436', 'bidv': '970418', 'agribank': '970405', 'mbbank': '970422', 'mb': '970422', 'techcombank': '970407', 'tcb': '970407', 'acb': '970416', 'vpbank': '970432', 'tpbank': '970423', 'sacombank': '970403', 'kienlongbank': '970452', 'klb': '970452' }; const formattedName = bankName.toLowerCase().replace(/\s/g, ''); return bankMap[formattedName] || null; }
+        function formatCurrency(amount) { const cleanAmount = cleanNumberString(amount); if (cleanAmount === null || cleanAmount === '' || isNaN(cleanAmount)) return '0'; return parseInt(cleanAmount).toLocaleString('vi-VN'); }
+        function formatDate(dateString) { if (!dateString) return new Date().toLocaleDateString('vi-VN'); try { const date = new Date(dateString); return isNaN(date) ? new Date().toLocaleDateString('vi-VN') : date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }); } catch (error) { return dateString; } }
+        function numberToWords(numStr) { const num = parseInt(cleanNumberString(numStr), 10); if (isNaN(num) || num === null) return 'Không đồng'; if (num === 0) return 'Không đồng'; const ones = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'], tens = ['', 'mười', 'hai mươi', 'ba mươi', 'bốn mươi', 'năm mươi', 'sáu mươi', 'bảy mươi', 'tám mươi', 'chín mươi'], scales = ['', 'nghìn', 'triệu', 'tỷ']; function convertHundreds(n) { let result = ''; const h = Math.floor(n / 100), t = Math.floor((n % 100) / 10), o = n % 10; if (h > 0) { result += ones[h] + ' trăm'; } if (t > 0) { if (h > 0) result += ' '; if (t === 1) { result += 'mười'; if (o === 5) result += ' lăm'; else if (o > 0) result += ' ' + ones[o]; } else { result += tens[t]; if (o === 1) result += ' mốt'; else if (o === 5) result += ' lăm'; else if (o > 0) result += ' ' + ones[o]; } } else if (o > 0) { if (h > 0) result += ' linh '; result += ones[o]; } return result; } let result = '', scaleIndex = 0, n = num; while (n > 0) { const group = n % 1000; if (group > 0) { result = convertHundreds(group) + (scales[scaleIndex] ? ' ' + scales[scaleIndex] : '') + (result ? ' ' + result : ''); } n = Math.floor(n / 1000); scaleIndex++; } result = result.trim(); return result.charAt(0).toUpperCase() + result.slice(1) + ' đồng'; }
+
+        function displayProducts(productsJson) {
+            const tbody = document.getElementById('products-list');
+            tbody.innerHTML = '';
+            let products = [];
+            const colspan = 9;
+            try {
+                if (productsJson) products = JSON.parse(decodeURIComponent(productsJson));
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center">Lỗi dữ liệu sản phẩm.</td></tr>`;
+                console.error("JSON Parse Error:", error, "Input:", decodeURIComponent(productsJson));
+                return;
+            }
+            if (!products || products.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center">Không có sản phẩm</td></tr>`;
+                return;
+            }
+            products.forEach((p, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="col-stt">${index + 1}</td>
+                    <td class="col-msp">${p.msp || ''}</td>
+                    <td class="col-sanpham" data-msp="${p.msp || ''}">${p.sanpham || ''}</td>
+                    <td class="col-dvt">${p.dvt || ''}</td>
+                    <td class="col-soluong">${p.soluong || 0}</td>
+                    <td class="col-soluongL">${p.soluongL || 0}</td>
+                    <td class="col-dongia">${formatCurrency(p.dongia || 0)}</td>
+                    <td class="col-thanhtien">${formatCurrency(p.thanhtien || 0)}</td>
+                    <td class="col-ghi-chu">${p.ghi_chu || ''}</td>`;
+                tbody.appendChild(row);
+            });
+        }
+
+        function generateVietQR(bankCode, accountNumber, amount, description, accountHolder) { return `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(accountHolder)}`; }
+        function updateQRCode(amount, orderNumber, bankCode, accountNumber, accountHolder) { return new Promise((resolve, reject) => { const qrContainer = document.getElementById('qr-code-container'); if (!amount || !bankCode || !accountNumber || isNaN(parseInt(amount)) || parseInt(amount) <= 0) { qrContainer.innerHTML = '<div class="error-message">Lỗi: Dữ liệu thanh toán không hợp lệ.</div>'; reject('Dữ liệu QR không hợp lệ'); return; } const description = orderNumber || ''; const qrUrl = generateVietQR(bankCode, accountNumber, amount, description, accountHolder); const qrImage = new Image(); qrImage.crossOrigin = 'anonymous'; qrContainer.innerHTML = '<p>Đang tạo mã QR...</p>'; qrImage.onload = () => { qrContainer.innerHTML = ''; qrContainer.appendChild(qrImage); resolve(); }; qrImage.onerror = () => { qrContainer.innerHTML = '<div class="error-message">Không thể tạo mã QR.</div>'; reject('Lỗi tải ảnh QR'); }; qrImage.src = qrUrl; }); }
+        function displayOrderQRCode(orderNumber) { const container = document.getElementById('order-qr-code'); if (container && orderNumber) { const qrImg = new Image(); qrImg.crossOrigin = 'anonymous'; qrImg.src = `https://quickchart.io/qr?text=${encodeURIComponent(orderNumber)}&size=64`; container.innerHTML = ''; container.appendChild(qrImg); } }
+
+        function populateInvoice(data) {
+            try {
+                let finalWebsite = data.website || 'N/A';
+                try { if (finalWebsite && finalWebsite.startsWith('{') && finalWebsite.endsWith('}')) { const websiteObj = JSON.parse(finalWebsite); finalWebsite = websiteObj.Url || finalWebsite; } } catch (e) {}
+                const bankCode = getBankCodeFromName(data.bankName);
+                
+                const titleText = (data.hangMuc || 'BÁN HÀNG').toUpperCase();
+                document.getElementById('main-title').textContent = 'HÓA ĐƠN ' + titleText;
+                
+                document.getElementById('ten_cong_ty').textContent = data.tenCongTy || 'Tên Công Ty';
+                document.getElementById('dia_chi').textContent = data.diaChi || 'N/A'; document.getElementById('so_dien_thoai').textContent = data.soDienThoai || 'N/A'; document.getElementById('email').textContent = data.email || 'N/A'; document.getElementById('footer_so_dien_thoai').textContent = data.soDienThoai || 'N/A'; document.getElementById('website').textContent = finalWebsite; document.getElementById('order-number').textContent = data.orderNumber || 'N/A'; document.getElementById('order-date').textContent = formatDate(data.orderDate); document.getElementById('customer-name').textContent = data.customerName || 'Khách lẻ';
+                const addressRow = document.querySelector('.customer-address-row');
+                if (data.diaChiKhachHang) {
+                    document.getElementById('customer-address').textContent = data.diaChiKhachHang;
+                    addressRow.style.display = '';
+                } else {
+                    addressRow.style.display = 'none';
+                }
+                document.getElementById('print-time').textContent = new Date().toLocaleString('vi-VN');
+                document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ'; document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ'; document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ'; document.getElementById('vat-percent').textContent = data.vatPercent || '0%'; document.getElementById('vat-amount').textContent = formatCurrency(data.vatAmount) + ' VNĐ'; document.getElementById('total-after-vat').textContent = formatCurrency(data.totalAfterVat) + ' VNĐ';
+                document.getElementById('amount-words').textContent = numberToWords(data.totalAfterVat); document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
+                
+                const vatAmountValue = parseFloat(cleanNumberString(data.vatAmount)) || 0;
+                const vatRow = document.getElementById('vat-row');
+                vatRow.style.display = vatAmountValue > 0 ? '' : 'none';
+
+                displayProducts(data.productsJson); displayOrderQRCode(data.orderNumber);
+                return updateQRCode(cleanNumberString(data.totalAfterVat), data.orderNumber, bankCode, data.accountNumber, data.accountHolder);
+            } catch (error) {
+                console.error('Lỗi nghiêm trọng khi tải dữ liệu hóa đơn:', error);
+                document.body.innerHTML = `<h1>Lỗi khi hiển thị hóa đơn</h1><p>${error.message}</p>`;
+                return Promise.reject(error);
+            }
+        }
+
+        function loadDataFromUrl() {
+            const data = {
+                orderNumber: getUrlParameter('so_don_hang'), orderDate: getUrlParameter('ngay_dat'), customerName: getUrlParameter('khach_hang'), diaChiKhachHang: getUrlParameter('dia_chi_khach_hang'),
+                subtotal: getUrlParameter('thanh_tien'), discount: getUrlParameter('giam_gia'), totalAfterDiscount: getUrlParameter('tong_tien_sau_ck'), vatPercent: getUrlParameter('phan_tram_vat'), vatAmount: getUrlParameter('tien_vat'), totalAfterVat: getUrlParameter('tong_tien_sau_vat'),
+                notes: getUrlParameter('ghi_chu'), productsJson: getUrlParameter('products'), bankName: getUrlParameter('bank_name'), accountNumber: getUrlParameter('account_number'), accountHolder: getUrlParameter('account_holder'),
+                tenCongTy: getUrlParameter('ten_cong_ty'), diaChi: getUrlParameter('dia_chi'), soDienThoai: getUrlParameter('so_dien_thoai'), email: getUrlParameter('email'), website: getUrlParameter('website'),
+                hangMuc: getUrlParameter('hang_muc')
+            };
+            return populateInvoice(data);
+        }
+
+        function loadDemoData() {
+            const demoProducts = [
+                { msp: "PM-001", sanpham: "Phần mềm quản lý bán hàng", dvt: "Gói", soluong: 1, soluongL: 0, dongia: "3500000", thanhtien: "3500000", ghi_chu: "Bản quyền vĩnh viễn" },
+                { msp: "HT-002", sanpham: "Dịch vụ hỗ trợ kỹ thuật", dvt: "Năm", soluong: 1, soluongL: 5, dongia: "1200000", thanhtien: "1200000", ghi_chu: "" },
+                { msp: "TT-003", sanpham: "Tích hợp cổng thanh toán", dvt: "Lần", soluong: 1, soluongL: 0, dongia: "1000000", thanhtien: "1000000", ghi_chu: "" },
+            ];
+            const subtotal = 5700000; const discount = 200000; const totalAfterDiscount = subtotal - discount; const vatPercent = "8%"; const vatAmount = totalAfterDiscount * 0.08; const totalAfterVat = totalAfterDiscount + vatAmount;
+            const data = {
+                tenCongTy: 'CÔNG TY TNHH CHẾ BIẾN HẢI SẢN BA LÀNG', diaChi: 'Số 05, đường Đỗ Đại, TDP Thượng Hải, phường Tĩnh Gia, Thanh Hóa', soDienThoai: '0976459995', email: 'balangth@balang.com.vn', website: 'www.balang.com.vn',
+                orderNumber: 'DEMO-EMS-001', orderDate: new Date().toISOString(), customerName: 'Khách hàng Demo', diaChiKhachHang: '25/10 Hậu Giang, Phường 4, Quận Tân Bình, TP.HCM',
+                subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(), vatPercent: vatPercent, vatAmount: vatAmount.toString(), totalAfterVat: totalAfterVat.toString(),
+                notes: 'MST: 0316870151. Đại diện pháp luật: Nguyễn Tấn Hiền.', productsJson: encodeURIComponent(JSON.stringify(demoProducts)),
+                hangMuc: 'BÁN HÀNG',
+                bankName: 'ACB', accountNumber: '181119878', accountHolder: 'CONG TY TNHH GIAI PHAP SO EMS'
+            };
+            const watermark = document.createElement('div'); watermark.className = 'demo-watermark'; watermark.innerHTML = 'Bản Demo<br><span style="font-size: 0.5em; letter-spacing: 1px;">EMS SOLUTION</span>'; document.getElementById('bill-container').appendChild(watermark);
+            return populateInvoice(data);
+        }
+
+        function changeFormat(format) {
+            document.body.className = '';
+            document.body.classList.add('format-' + format);
+
+            const totalsLabels = document.querySelectorAll('.totals-box .total-row > span:first-child');
+            totalsLabels.forEach(label => {
+                if (label.dataset.originalText) {
+                    label.innerHTML = label.dataset.originalText;
+                }
+            });
+
+            if (format === '80mm') {
+                const paymentSection = document.querySelector('.payment-section');
+                const totalsBox = document.querySelector('.totals-box');
+                if (paymentSection && totalsBox) {
+                    totalsBox.insertAdjacentElement('afterend', paymentSection);
+                }
+
+                totalsLabels.forEach(label => {
+                    if (!label.dataset.originalText) {
+                        label.dataset.originalText = label.innerHTML;
+                    }
+                    let newLabel = label.dataset.originalText;
+                    if (newLabel.includes('Thành Tiền:')) newLabel = 'Thành<br>Tiền:';
+                    if (newLabel.includes('Tổng Tiền Sau Chiết Khấu:')) newLabel = 'Tổng Tiền<br>Sau CK:';
+                    if (newLabel.includes('VAT')) newLabel = 'VAT:';
+                    if (newLabel.includes('Phải Thanh Toán:')) newLabel = 'TỔNG CỘNG:';
+                    label.innerHTML = newLabel;
+                });
+
+            } else {
+                const paymentSection = document.querySelector('.payment-section');
+                const leftBottomSection = document.querySelector('.left-bottom-section');
+                if (paymentSection && leftBottomSection) {
+                    leftBottomSection.prepend(paymentSection);
+                }
+            }
+        }
+
+        async function initializeApp() {
+            const loader = document.getElementById('loading-overlay');
+            const container = document.getElementById('bill-container');
+            const formatFromUrl = getUrlParameter('format');
+            const initialFormat = ['80mm', 'a4', 'a5'].includes(formatFromUrl) ? formatFromUrl : 'a4';
+
+            try {
+                await (window.location.search.length > 1 ? loadDataFromUrl() : loadDemoData());
+                changeFormat(initialFormat);
+                const logo = document.getElementById('logo-img');
+                if (logo) { await convertImageToBase64(logo); }
+                container.style.visibility = 'visible';
+                loader.classList.add('hidden');
+            } catch (error) {
+                console.error("Failed to initialize the invoice:", error);
+                loader.innerHTML = `<h1>Lỗi tải hóa đơn</h1><p>${error.message}</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            window.addEventListener('beforeprint', () => { document.querySelector('.no-print').style.display = 'none'; });
+            window.addEventListener('afterprint', () => { document.querySelector('.no-print').style.display = 'flex'; });
+        });
+    </script>
+</body>
+</html>

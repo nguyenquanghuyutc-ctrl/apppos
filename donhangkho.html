@@ -40,7 +40,7 @@
         .print-options button.btn-80mm { background-color: #007bff; } 
         .print-options button.btn-a4 { background-color: #28a745; } 
         .print-options button.btn-a5 { background-color: #ffc107; } 
-        .print-options button.btn-a4-signature { background-color: #8e44ad; } /* Màu tím */
+        .print-options button.btn-a4-signature { background-color: #8e44ad; }
         .print-options button.btn-print { background-color: #6c757d; } 
         .print-options button.btn-pdf { background-color: #dc3545; }
         .icon { display: block; background: white; border: 2px solid white; border-radius: 2px; } .icon-a4 { width: 14px; height: 20px; } .icon-a5 { width: 20px; height: 14px; }
@@ -85,6 +85,10 @@
         .format-a4 .company-header, .format-a5 .company-header, .format-a4-signature .company-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding-bottom: 5px; border-bottom: 1px solid #ccc; z-index: 2; position: relative; }
         .format-a4 .logo, .format-a5 .logo, .format-a4-signature .logo { max-width: 60px; } .format-a4 .company-name, .format-a5 .company-name, .format-a4-signature .company-name { font-size: 1.6em; color: #0056b3; } .format-a4 .main-title-container, .format-a5 .main-title-container, .format-a4-signature .main-title-container { text-align: center; letter-spacing: 2px; color: #333; z-index: 2; position: relative; }
         .order-number-subtitle { text-align: center; font-size: 0.9em; color: #555; margin-bottom: 15px; } 
+        /* SỬA: Thêm style cho thời gian in */
+        .print-time-info { font-size: 0.8em; font-style: italic; color: #666; text-align: center; margin-top: 2px; }
+        .format-80mm .print-time-info { display: none; } /* Ẩn dòng này trên khổ 80mm vì đã có sẵn */
+
         .format-a4 .customer-details, .format-a5 .customer-details, .format-a4-signature .customer-details { margin-bottom: 10px; margin-top: 10px; z-index: 2; position: relative; } 
         .format-a4 .customer-details-row, .format-a5 .customer-details-row, .format-a4-signature .customer-details-row { display: flex; justify-content: space-between; padding: 3px 0; } 
         .customer-address-row { padding: 3px 0; }
@@ -131,10 +135,10 @@
         .format-a4-signature .main-title-container { font-size: 2em; font-weight: bold; margin: 15px 0 0 0; }
         .format-a4-signature .products-table { font-size: 0.9em; }
         .format-a4-signature .products-table th, .format-a4-signature .products-table td { padding: 8px 10px; }
-        .format-a4-signature .bottom-section { margin-top: 20px; }
+        .format-a4-signature .bottom-section { margin-top: 20px; flex-wrap: wrap; gap: 0; }
+        .format-a4-signature .right-bottom-section { width: 100%; } /* Cột phải (tiền) chiếm toàn bộ */
+        .format-a4-signature .left-bottom-section { width: 100%; text-align: left; } /* Cột trái (ghi chú) chiếm toàn bộ */
         .format-a4-signature .payment-section { display: none; } /* Ẩn khu vực QR */
-        .format-a4-signature .left-bottom-section { display: none; } /* Ẩn cột trái */
-        .format-a4-signature .right-bottom-section { width: 100%; } /* Cột phải chiếm toàn bộ */
         .format-a4-signature .total-row, .format-a4-signature .total-final { padding: 10px; }
         .format-a4-signature .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
@@ -200,7 +204,11 @@
         </div>
         <div class="invoice-body">
             <div class="main-title-container" id="main-title">HÓA ĐƠN BÁN HÀNG</div>
-            <div class="order-number-subtitle"> <span class="text-bold">Số Đơn Hàng:</span> <span id="order-number"></span> </div>
+            <!-- SỬA: Thêm một div để chứa thời gian in -->
+            <div class="order-number-subtitle">
+                <div><span class="text-bold">Số Đơn Hàng:</span> <span id="order-number"></span></div>
+                <div id="print-time-subtitle" class="print-time-info"></div>
+            </div>
             <div class="customer-details">
                 <div class="customer-details-row">
                     <span><span class="text-bold">Khách Hàng:</span> <span id="customer-name"></span></span>
@@ -336,7 +344,12 @@
                 } else {
                     addressRow.style.display = 'none';
                 }
-                document.getElementById('print-time').textContent = new Date().toLocaleString('vi-VN');
+                
+                const printDateTime = new Date().toLocaleString('vi-VN');
+                document.getElementById('print-time').textContent = printDateTime;
+                // SỬA: Thêm thời gian in vào cả khu vực subtitle
+                document.getElementById('print-time-subtitle').textContent = `(In lúc: ${printDateTime})`;
+
                 document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ'; document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ'; document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ'; document.getElementById('vat-percent').textContent = data.vatPercent || '0%'; document.getElementById('vat-amount').textContent = formatCurrency(data.vatAmount) + ' VNĐ'; document.getElementById('total-after-vat').textContent = formatCurrency(data.totalAfterVat) + ' VNĐ';
                 document.getElementById('amount-words').textContent = numberToWords(data.totalAfterVat); document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
                 
@@ -408,7 +421,11 @@
                     let newLabel = label.dataset.originalText;
                     if (newLabel.includes('Thành Tiền:')) newLabel = 'Thành<br>Tiền:';
                     if (newLabel.includes('Tổng Tiền Sau Chiết Khấu:')) newLabel = 'Tổng Tiền<br>Sau CK:';
-                    if (newLabel.includes('VAT')) newLabel = 'VAT:';
+                    // SỬA: Sửa lại logic để hiển thị đúng % VAT trên 80mm
+                    if (label.parentElement.id === 'vat-row') {
+                        const vatPercentText = document.getElementById('vat-percent').textContent;
+                        newLabel = `VAT (${vatPercentText}):`;
+                    }
                     if (newLabel.includes('Phải Thanh Toán:')) newLabel = 'TỔNG CỘNG:';
                     label.innerHTML = newLabel;
                 });

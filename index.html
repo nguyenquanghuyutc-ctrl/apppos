@@ -226,7 +226,8 @@
                             <div class="total-row"><span>Thành Tiền:</span><span id="subtotal" class="text-right"></span></div>
                             <div class="total-row"><span>Giảm Giá:</span><span id="discount" class="text-right"></span></div>
                             <div class="total-row"><span>Tổng Tiền Sau Chiết Khấu:</span><span id="total-after-discount" class="text-right"></span></div>
-                            <div class="total-row"><span>VAT (<span id="vat-percent"></span>):</span><span id="vat-amount" class="text-right"></span></div>
+                            <!-- THÊM ID "vat-row" VÀO ĐÂY ĐỂ ĐIỀU KHIỂN BẰNG JAVASCRIPT -->
+                            <div class="total-row" id="vat-row"><span>VAT (<span id="vat-percent"></span>):</span><span id="vat-amount" class="text-right"></span></div>
                             <div class="total-row total-final"><span>Phải Thanh Toán:</span><span id="total-after-vat" class="text-right text-bold"></span></div>
                             <div class="amount-in-words"><span class="text-bold">Bằng Chữ:</span> <span id="amount-words"></span></div>
                         </div>
@@ -305,7 +306,6 @@
                 try { if (finalWebsite && finalWebsite.startsWith('{') && finalWebsite.endsWith('}')) { const websiteObj = JSON.parse(finalWebsite); finalWebsite = websiteObj.Url || finalWebsite; } } catch (e) {}
                 const bankCode = getBankCodeFromName(data.bankName);
                 
-                // CẬP NHẬT: Thay đổi tiêu đề hóa đơn một cách linh động
                 const titleText = (data.hangMuc || 'BÁN HÀNG').toUpperCase();
                 document.getElementById('main-title').textContent = 'HÓA ĐƠN ' + titleText;
                 
@@ -321,6 +321,16 @@
                 document.getElementById('print-time').textContent = new Date().toLocaleString('vi-VN');
                 document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ'; document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ'; document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ'; document.getElementById('vat-percent').textContent = data.vatPercent || '0%'; document.getElementById('vat-amount').textContent = formatCurrency(data.vatAmount) + ' VNĐ'; document.getElementById('total-after-vat').textContent = formatCurrency(data.totalAfterVat) + ' VNĐ';
                 document.getElementById('amount-words').textContent = numberToWords(data.totalAfterVat); document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
+                
+                // THÊM: Ẩn/hiện dòng VAT một cách linh động
+                const vatAmountValue = parseFloat(cleanNumberString(data.vatAmount)) || 0;
+                const vatRow = document.getElementById('vat-row');
+                if (vatAmountValue > 0) {
+                    vatRow.style.display = 'flex'; // Hoặc 'block' tùy vào CSS của bạn, 'flex' là đúng trong trường hợp này
+                } else {
+                    vatRow.style.display = 'none';
+                }
+
                 displayProducts(data.productsJson); displayOrderQRCode(data.orderNumber);
                 return updateQRCode(cleanNumberString(data.totalAfterVat), data.orderNumber, bankCode, data.accountNumber, data.accountHolder);
             } catch (error) {
@@ -336,7 +346,6 @@
                 subtotal: getUrlParameter('thanh_tien'), discount: getUrlParameter('giam_gia'), totalAfterDiscount: getUrlParameter('tong_tien_sau_ck'), vatPercent: getUrlParameter('phan_tram_vat'), vatAmount: getUrlParameter('tien_vat'), totalAfterVat: getUrlParameter('tong_tien_sau_vat'),
                 notes: getUrlParameter('ghi_chu'), productsJson: getUrlParameter('products'), bankName: getUrlParameter('bank_name'), accountNumber: getUrlParameter('account_number'), accountHolder: getUrlParameter('account_holder'),
                 tenCongTy: getUrlParameter('ten_cong_ty'), diaChi: getUrlParameter('dia_chi'), soDienThoai: getUrlParameter('so_dien_thoai'), email: getUrlParameter('email'), website: getUrlParameter('website'),
-                // BỔ SUNG: Đọc tham số 'hang_muc' từ URL
                 hangMuc: getUrlParameter('hang_muc')
             };
             return populateInvoice(data);
@@ -354,7 +363,6 @@
                 orderNumber: 'DEMO-EMS-001', orderDate: new Date().toISOString(), customerName: 'Khách hàng Demo', diaChiKhachHang: '25/10 Hậu Giang, Phường 4, Quận Tân Bình, TP.HCM',
                 subtotal: subtotal.toString(), discount: discount.toString(), totalAfterDiscount: totalAfterDiscount.toString(), vatPercent: vatPercent, vatAmount: vatAmount.toString(), totalAfterVat: totalAfterVat.toString(),
                 notes: 'MST: 0316870151. Đại diện pháp luật: Nguyễn Tấn Hiền.', productsJson: encodeURIComponent(JSON.stringify(demoProducts)),
-                // BỔ SUNG: Thêm hạng mục mặc định cho dữ liệu demo
                 hangMuc: 'BÁN HÀNG',
                 bankName: 'ACB', accountNumber: '181119878', accountHolder: 'CONG TY TNHH GIAI PHAP SO EMS'
             };

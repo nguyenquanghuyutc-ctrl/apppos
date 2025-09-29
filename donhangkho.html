@@ -23,7 +23,9 @@
             .bill-container { margin: 0 !important; padding: 0 !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; border: none !important; page-break-inside: avoid; position: relative; }
             .demo-watermark { display: none; }
             @page { margin: 0; } @page a4-portrait { size: A4 portrait; margin: 8mm; } @page a5-landscape { size: A5 landscape; margin: 5mm; } @page receipt-80mm { size: 80mm auto; margin: 0; }
-            body.format-a4 { page: a4-portrait; } body.format-a5 { page: a5-landscape; } body.format-80mm { page: receipt-80mm; }
+            body.format-a4, body.format-a4-signature { page: a4-portrait; } 
+            body.format-a5 { page: a5-landscape; } 
+            body.format-80mm { page: receipt-80mm; }
             * { page-break-before: avoid; page-break-after: avoid; }
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +37,12 @@
         .options-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
         .print-options button { margin: 0; padding: 8px 12px; height: 44px; cursor: pointer; border: none; border-radius: 5px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s ease-in-out; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; gap: 8px; }
         .print-options button:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.3); transform: translateY(-2px); filter: brightness(1.1); }
-        .print-options button.btn-80mm { background-color: #007bff; } .print-options button.btn-a4 { background-color: #28a745; } .print-options button.btn-a5 { background-color: #ffc107; } .print-options button.btn-print { background-color: #6c757d; } .print-options button.btn-pdf { background-color: #dc3545; }
+        .print-options button.btn-80mm { background-color: #007bff; } 
+        .print-options button.btn-a4 { background-color: #28a745; } 
+        .print-options button.btn-a5 { background-color: #ffc107; } 
+        .print-options button.btn-a4-signature { background-color: #8e44ad; } /* Màu tím */
+        .print-options button.btn-print { background-color: #6c757d; } 
+        .print-options button.btn-pdf { background-color: #dc3545; }
         .icon { display: block; background: white; border: 2px solid white; border-radius: 2px; } .icon-a4 { width: 14px; height: 20px; } .icon-a5 { width: 20px; height: 14px; }
         .icon-print { position: relative; width: 24px; height: 22px; } .icon-print .printer-top { position: absolute; top: 0; left: 2px; width: 20px; height: 8px; border: 2px solid white; border-bottom: none; } .icon-print .printer-body { position: absolute; bottom: 0; left: 0; width: 24px; height: 12px; background: white; border-radius: 2px; } .icon-print .paper { position: absolute; top: 4px; left: 6px; width: 12px; height: 4px; background: #eee; }
         .product-note { font-size: 0.9em; color: #555; font-style: italic; }
@@ -72,48 +79,68 @@
         .format-80mm .products-table th.col-thanhtien::before { content: "Thành\ATiền"; font-size: 10px; white-space: pre; }
         .format-80mm .bottom-section { display: block; } .format-80mm .left-bottom-section, .format-80mm .right-bottom-section { width: 100%; } .format-80mm .totals-box { border-top: 1px dashed #000; padding-top: 10px; } .format-80mm .total-row { display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 11px; align-items: center; } .format-80mm .total-final { font-weight: bold; font-size: 13px; border-top: 1px solid #000; padding-top: 5px; } .format-80mm .amount-in-words { font-size: 10px; font-style: italic; margin-top: 5px; text-align: center; } .format-80mm .notes-section { margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 10px; } .format-80mm .payment-section { margin-top: 15px; text-align: center; } .format-80mm .qr-code { margin-top: 5px; } .format-80mm .qr-code img { width: 180px; height: 180px; } .format-80mm .footer { text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px; }
 
-        /* --- A4 & A5 SHARED FORMATS --- */
-        body.format-a4, body.format-a5 { font-family: Arial, sans-serif; }
-        .format-a4 .bill-container, .format-a5 .bill-container { margin: 20px auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        .format-a4 .company-header, .format-a5 .company-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding-bottom: 5px; border-bottom: 1px solid #ccc; z-index: 2; position: relative; }
-        .format-a4 .logo, .format-a5 .logo { max-width: 60px; } .format-a4 .company-name, .format-a5 .company-name { font-size: 1.6em; color: #0056b3; } .format-a4 .main-title-container, .format-a5 .main-title-container { text-align: center; letter-spacing: 2px; color: #333; z-index: 2; position: relative; }
-        .order-number-subtitle { text-align: center; font-size: 0.9em; color: #555; margin-bottom: 15px; } .format-a4 .customer-details, .format-a5 .customer-details { margin-bottom: 10px; margin-top: 10px; z-index: 2; position: relative; } .format-a4 .customer-details-row, .format-a5 .customer-details-row { display: flex; justify-content: space-between; padding: 3px 0; } .customer-address-row { padding: 3px 0; }
-        .format-a4 .row-stack-on-receipt, .format-a5 .row-stack-on-receipt { display: none; }
-        .format-a4 .products-table, .format-a5 .products-table { border: 0.5pt solid #ccc; border-radius: 0; border-collapse: collapse; overflow: hidden; z-index: 2; position: relative; }
-        .format-a4 .products-table th, .format-a4 .products-table td, .format-a5 .products-table th, .format-a5 .products-table td { border: 0.5pt solid #ccc; vertical-align: top; }
-        .format-a4 .products-table thead tr, .format-a5 .products-table thead tr { background-color: #d6eaf8; color: #333; }
-        .format-a4 .products-table th, .format-a5 .products-table th { text-transform: uppercase; font-size: 0.85em; white-space: nowrap; }
-        .format-a4 .products-table tbody tr:nth-child(even), .format-a5 .products-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
-        .format-a4 .products-table .col-stt, .format-a5 .products-table .col-stt { width: 4%; text-align: center; }
-        .format-a4 .products-table .col-msp, .format-a5 .products-table .col-msp { width: 12%; }
-        .format-a4 .products-table .col-dvt, .format-a5 .products-table .col-dvt { width: 6%; text-align: center; }
-        .format-a4 .products-table .col-soluong, .format-a5 .products-table .col-soluong { width: 7%; text-align: center; }
-        .format-a4 .products-table .col-soluongL, .format-a5 .products-table .col-soluongL { width: 7%; text-align: center; }
-        .format-a4 .products-table .col-dongia, .format-a5 .products-table .col-dongia { width: 13%; text-align: right; }
-        .format-a4 .products-table .col-thanhtien, .format-a5 .products-table .col-thanhtien { width: 14%; text-align: right; }
-        .format-a4 .products-table .col-ghi-chu, .format-a5 .products-table .col-ghi-chu { width: 12%; }
-        .format-a4 .bottom-section, .format-a5 .bottom-section { display: flex; justify-content: space-between; z-index: 2; position: relative; }
-        .format-a4 .left-bottom-section, .format-a5 .left-bottom-section { width: 40%; text-align: center; } .format-a4 .right-bottom-section, .format-a5 .right-bottom-section { width: 60%; } .format-a4 .totals-box, .format-a5 .totals-box { width: 100%; } .format-a4 .total-row, .format-a5 .total-row { border-bottom: 1px solid #eee; display: flex; justify-content: space-between; } .format-a4 .total-row span:first-child, .format-a5 .total-row span:first-child { color: #555; } .format-a4 .total-final, .format-a5 .total-final { display: flex; justify-content: space-between; background-color: #f8f9fa; } .format-a4 .total-final span, .format-a5 .total-final span { font-size: 1.2em; font-weight: bold; color: #0056b3; }
-        .format-a4 .notes-section, .format-a5 .notes-section { margin-top: 20px; font-style: italic; font-size: 0.9em; text-align: left; }
-        .format-a4 .footer, .format-a5 .footer { clear: both; z-index: 2; position: relative; display: flex; justify-content: space-between; align-items: center; }
-        .format-a4 .order-qr-code img, .format-a5 .order-qr-code img { width: 64px; height: 64px; }
+        /* --- A4, A4-SIGNATURE & A5 SHARED FORMATS --- */
+        body.format-a4, body.format-a5, body.format-a4-signature { font-family: Arial, sans-serif; }
+        .format-a4 .bill-container, .format-a5 .bill-container, .format-a4-signature .bill-container { margin: 20px auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .format-a4 .company-header, .format-a5 .company-header, .format-a4-signature .company-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; padding-bottom: 5px; border-bottom: 1px solid #ccc; z-index: 2; position: relative; }
+        .format-a4 .logo, .format-a5 .logo, .format-a4-signature .logo { max-width: 60px; } .format-a4 .company-name, .format-a5 .company-name, .format-a4-signature .company-name { font-size: 1.6em; color: #0056b3; } .format-a4 .main-title-container, .format-a5 .main-title-container, .format-a4-signature .main-title-container { text-align: center; letter-spacing: 2px; color: #333; z-index: 2; position: relative; }
+        .order-number-subtitle { text-align: center; font-size: 0.9em; color: #555; margin-bottom: 15px; } 
+        .format-a4 .customer-details, .format-a5 .customer-details, .format-a4-signature .customer-details { margin-bottom: 10px; margin-top: 10px; z-index: 2; position: relative; } 
+        .format-a4 .customer-details-row, .format-a5 .customer-details-row, .format-a4-signature .customer-details-row { display: flex; justify-content: space-between; padding: 3px 0; } 
+        .customer-address-row { padding: 3px 0; }
+        .format-a4 .row-stack-on-receipt, .format-a5 .row-stack-on-receipt, .format-a4-signature .row-stack-on-receipt { display: none; }
+        .format-a4 .products-table, .format-a5 .products-table, .format-a4-signature .products-table { border: 0.5pt solid #ccc; border-radius: 0; border-collapse: collapse; overflow: hidden; z-index: 2; position: relative; }
+        .format-a4 .products-table th, .format-a4 .products-table td, .format-a5 .products-table th, .format-a5 .products-table td, .format-a4-signature .products-table th, .format-a4-signature .products-table td { border: 0.5pt solid #ccc; vertical-align: top; }
+        .format-a4 .products-table thead tr, .format-a5 .products-table thead tr, .format-a4-signature .products-table thead tr { background-color: #d6eaf8; color: #333; }
+        .format-a4 .products-table th, .format-a5 .products-table th, .format-a4-signature .products-table th { text-transform: uppercase; font-size: 0.85em; white-space: nowrap; }
+        .format-a4 .products-table tbody tr:nth-child(even), .format-a5 .products-table tbody tr:nth-child(even), .format-a4-signature .products-table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        .format-a4 .products-table .col-stt, .format-a5 .products-table .col-stt, .format-a4-signature .products-table .col-stt { width: 4%; text-align: center; }
+        .format-a4 .products-table .col-msp, .format-a5 .products-table .col-msp, .format-a4-signature .products-table .col-msp { width: 12%; }
+        .format-a4 .products-table .col-dvt, .format-a5 .products-table .col-dvt, .format-a4-signature .products-table .col-dvt { width: 6%; text-align: center; }
+        .format-a4 .products-table .col-soluong, .format-a5 .products-table .col-soluong, .format-a4-signature .products-table .col-soluong { width: 7%; text-align: center; }
+        .format-a4 .products-table .col-soluongL, .format-a5 .products-table .col-soluongL, .format-a4-signature .products-table .col-soluongL { width: 7%; text-align: center; }
+        .format-a4 .products-table .col-dongia, .format-a5 .products-table .col-dongia, .format-a4-signature .products-table .col-dongia { width: 13%; text-align: right; }
+        .format-a4 .products-table .col-thanhtien, .format-a5 .products-table .col-thanhtien, .format-a4-signature .products-table .col-thanhtien { width: 14%; text-align: right; }
+        .format-a4 .products-table .col-ghi-chu, .format-a5 .products-table .col-ghi-chu, .format-a4-signature .products-table .col-ghi-chu { width: 12%; }
+        .format-a4 .bottom-section, .format-a5 .bottom-section, .format-a4-signature .bottom-section { display: flex; justify-content: space-between; z-index: 2; position: relative; }
+        .format-a4 .left-bottom-section, .format-a5 .left-bottom-section, .format-a4-signature .left-bottom-section { width: 40%; text-align: center; } 
+        .format-a4 .right-bottom-section, .format-a5 .right-bottom-section, .format-a4-signature .right-bottom-section { width: 60%; } 
+        .format-a4 .totals-box, .format-a5 .totals-box, .format-a4-signature .totals-box { width: 100%; } 
+        .format-a4 .total-row, .format-a5 .total-row, .format-a4-signature .total-row { border-bottom: 1px solid #eee; display: flex; justify-content: space-between; } 
+        .format-a4 .total-row span:first-child, .format-a5 .total-row span:first-child, .format-a4-signature .total-row span:first-child { color: #555; } 
+        .format-a4 .total-final, .format-a5 .total-final, .format-a4-signature .total-final { display: flex; justify-content: space-between; background-color: #f8f9fa; } 
+        .format-a4 .total-final span, .format-a5 .total-final span, .format-a4-signature .total-final span { font-size: 1.2em; font-weight: bold; color: #0056b3; }
+        .format-a4 .notes-section, .format-a5 .notes-section, .format-a4-signature .notes-section { margin-top: 20px; font-style: italic; font-size: 0.9em; text-align: left; }
+        .format-a4 .footer, .format-a5 .footer, .format-a4-signature .footer { clear: both; z-index: 2; position: relative; display: flex; justify-content: space-between; align-items: center; }
+        .format-a4 .order-qr-code img, .format-a5 .order-qr-code img, .format-a4-signature .order-qr-code img { width: 64px; height: 64px; }
 
-        /* --- A4 SPECIFIC FORMAT --- */
+        /* --- A4 (CÓ QR) SPECIFIC FORMAT --- */
         body.format-a4 { font-size: 10pt; }
         .format-a4 .bill-container { max-width: 190mm; min-height: 280mm; padding: 10pt; }
         .format-a4 .main-title-container { font-size: 2em; font-weight: bold; margin: 15px 0 0 0; }
         .format-a4 .products-table { font-size: 0.9em; }
         .format-a4 .products-table th, .format-a4 .products-table td { padding: 8px 10px; }
         .format-a4 .bottom-section { margin-top: 20px; gap: 30px; }
-        /* KHÔI PHỤC: Ẩn QR code thanh toán trên A4 */
-        .format-a4 .payment-section { display: none; }
+        .format-a4 .qr-code img { width: 140px; height: 140px; }
         .format-a4 .total-row, .format-a4 .total-final { padding: 10px; }
         .format-a4 .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
+        /* === A4 KÝ TÊN (KHÔNG QR) SPECIFIC FORMAT === */
+        body.format-a4-signature { font-size: 10pt; }
+        .format-a4-signature .bill-container { max-width: 190mm; min-height: 280mm; padding: 10pt; }
+        .format-a4-signature .main-title-container { font-size: 2em; font-weight: bold; margin: 15px 0 0 0; }
+        .format-a4-signature .products-table { font-size: 0.9em; }
+        .format-a4-signature .products-table th, .format-a4-signature .products-table td { padding: 8px 10px; }
+        .format-a4-signature .bottom-section { margin-top: 20px; }
+        .format-a4-signature .payment-section { display: none; } /* Ẩn khu vực QR */
+        .format-a4-signature .left-bottom-section { display: none; } /* Ẩn cột trái */
+        .format-a4-signature .right-bottom-section { width: 100%; } /* Cột phải chiếm toàn bộ */
+        .format-a4-signature .total-row, .format-a4-signature .total-final { padding: 10px; }
+        .format-a4-signature .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
+        
         /* === SIGNATURES SECTION === */
-        /* KHÔI PHỤC: Mặc định ẩn, chỉ hiện trên A4 */
         .signatures-section { display: none; } 
-        .format-a4 .signatures-section { display: flex; justify-content: space-around; text-align: center; margin-top: 40px; padding-bottom: 20px; z-index: 2; position: relative; }
+        .format-a4-signature .signatures-section { display: flex; justify-content: space-around; text-align: center; margin-top: 40px; padding-bottom: 20px; z-index: 2; position: relative; }
         .signature-box { min-height: 90px; }
         .signature-box .signature-title { font-weight: bold; margin-bottom: 5px; }
         .signature-box .signature-note { font-style: italic; font-size: 0.8em; color: #666; }
@@ -132,7 +159,7 @@
         .format-a5 .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #ccc; font-size: 0.85em; color: #777; }
 
         /* --- EXPORT & RESPONSIVE --- */
-        body.export-mode { background: white !important; } .export-mode .bill-container { margin: 0 auto !important; box-shadow: none !important; border: none !important; } .export-mode.format-a4 .bill-container { padding: 10pt !important; } .export-mode.format-a5 .bill-container { padding: 5pt !important; } .export-mode.format-80mm .bill-container { padding: 3mm !important; } .export-mode .demo-watermark { display: block !important; }
+        body.export-mode { background: white !important; } .export-mode .bill-container { margin: 0 auto !important; box-shadow: none !important; border: none !important; } .export-mode.format-a4 .bill-container, .export-mode.format-a4-signature .bill-container { padding: 10pt !important; } .export-mode.format-a5 .bill-container { padding: 5pt !important; } .export-mode.format-80mm .bill-container { padding: 3mm !important; } .export-mode .demo-watermark { display: block !important; }
         @media (max-width: 768px) {
             .print-options { top: 5px; right: 5px; gap: 8px; }
             .options-row { display: contents; }
@@ -144,8 +171,16 @@
     <div id="loading-overlay"><div class="spinner"></div></div>
 
     <div class="print-options no-print">
-        <div class="options-row"> <button class="btn-80mm" onclick="changeFormat('80mm')">80mm</button> <button class="btn-a4" onclick="changeFormat('a4')" title="Khổ A4 dọc">A4<span class="icon icon-a4"></span></button> <button class="btn-a5" onclick="changeFormat('a5')" title="Khổ A5 ngang">A5<span class="icon icon-a5"></span></button> </div>
-        <div class="options-row"> <button class="btn-print" onclick="window.print()" title="In Hóa Đơn"><div class="icon-print"><div class="paper"></div><div class="printer-top"></div><div class="printer-body"></div></div></button> <button class="btn-pdf" onclick="downloadPDF()" title="Tải về file PDF"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1m-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0"/></svg></button> </div>
+        <div class="options-row">
+            <button class="btn-80mm" onclick="changeFormat('80mm')">80mm</button>
+            <button class="btn-a4" onclick="changeFormat('a4')" title="Khổ A4 (Có QR)">A4<span class="icon icon-a4"></span></button>
+            <button class="btn-a5" onclick="changeFormat('a5')" title="Khổ A5 ngang (Có QR)">A5<span class="icon icon-a5"></span></button>
+            <button class="btn-a4-signature" onclick="changeFormat('a4-signature')" title="Khổ A4 Ký Tên (Không QR)">A4 Ký Tên</button>
+        </div>
+        <div class="options-row">
+            <button class="btn-print" onclick="window.print()" title="In Hóa Đơn"><div class="icon-print"><div class="paper"></div><div class="printer-top"></div><div class="printer-body"></div></div></button>
+            <button class="btn-pdf" onclick="downloadPDF()" title="Tải về file PDF"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-arrow-down-fill" viewBox="0 0 16 16"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1m-1 4v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 11.293V7.5a.5.5 0 0 1 1 0"/></svg></button>
+        </div>
     </div>
 
     <div class="bill-container" id="bill-container">
@@ -219,7 +254,6 @@
             </div>
         </div>
         
-        <!-- KHÔI PHỤC: Phần Chữ Ký -->
         <div class="signatures-section">
             <div class="signature-box">
                 <div class="signature-title">XUẤT KHO</div>
@@ -392,7 +426,7 @@
             const loader = document.getElementById('loading-overlay');
             const container = document.getElementById('bill-container');
             const formatFromUrl = getUrlParameter('format');
-            const initialFormat = ['80mm', 'a4', 'a5'].includes(formatFromUrl) ? formatFromUrl : 'a4';
+            const initialFormat = ['80mm', 'a4', 'a5', 'a4-signature'].includes(formatFromUrl) ? formatFromUrl : 'a4';
 
             try {
                 await (window.location.search.length > 1 ? loadDataFromUrl() : loadDemoData());

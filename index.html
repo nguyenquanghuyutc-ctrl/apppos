@@ -109,30 +109,12 @@
         .format-a4 .total-row, .format-a4 .total-final { padding: 10px; }
         .format-a4 .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
-        /* === SIGNATURES SECTION (ADJUSTED) === */
-        .signatures-section { display: none; } /* Hide by default */
-        .format-a4 .signatures-section {
-            display: flex;
-            justify-content: space-around;
-            text-align: center;
-            margin-top: 40px; /* Space above the signature blocks */
-            padding-bottom: 20px;
-            z-index: 2;
-            position: relative;
-        }
-        .signature-box {
-            min-height: 90px; /* This creates the vertical space for signing */
-        }
-        .signature-box .signature-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .signature-box .signature-note {
-            font-style: italic;
-            font-size: 0.8em;
-            color: #666;
-        }
-        /* === END OF SECTION === */
+        /* === SIGNATURES SECTION === */
+        .signatures-section { display: none; } 
+        .format-a4 .signatures-section { display: flex; justify-content: space-around; text-align: center; margin-top: 40px; padding-bottom: 20px; z-index: 2; position: relative; }
+        .signature-box { min-height: 90px; }
+        .signature-box .signature-title { font-weight: bold; margin-bottom: 5px; }
+        .signature-box .signature-note { font-style: italic; font-size: 0.8em; color: #666; }
 
         /* --- A5 SPECIFIC FORMAT --- */
         body.format-a5 { font-size: 8pt; }
@@ -226,7 +208,6 @@
                             <div class="total-row"><span>Thành Tiền:</span><span id="subtotal" class="text-right"></span></div>
                             <div class="total-row"><span>Giảm Giá:</span><span id="discount" class="text-right"></span></div>
                             <div class="total-row"><span>Tổng Tiền Sau Chiết Khấu:</span><span id="total-after-discount" class="text-right"></span></div>
-                            <!-- THÊM ID "vat-row" VÀO ĐÂY ĐỂ ĐIỀU KHIỂN BẰNG JAVASCRIPT -->
                             <div class="total-row" id="vat-row"><span>VAT (<span id="vat-percent"></span>):</span><span id="vat-amount" class="text-right"></span></div>
                             <div class="total-row total-final"><span>Phải Thanh Toán:</span><span id="total-after-vat" class="text-right text-bold"></span></div>
                             <div class="amount-in-words"><span class="text-bold">Bằng Chữ:</span> <span id="amount-words"></span></div>
@@ -322,14 +303,9 @@
                 document.getElementById('subtotal').textContent = formatCurrency(data.subtotal) + ' VNĐ'; document.getElementById('discount').textContent = formatCurrency(data.discount) + ' VNĐ'; document.getElementById('total-after-discount').textContent = formatCurrency(data.totalAfterDiscount) + ' VNĐ'; document.getElementById('vat-percent').textContent = data.vatPercent || '0%'; document.getElementById('vat-amount').textContent = formatCurrency(data.vatAmount) + ' VNĐ'; document.getElementById('total-after-vat').textContent = formatCurrency(data.totalAfterVat) + ' VNĐ';
                 document.getElementById('amount-words').textContent = numberToWords(data.totalAfterVat); document.getElementById('ghi_chu').textContent = data.notes || 'Không có'; document.getElementById('bank-name').textContent = data.bankName || 'N/A'; document.getElementById('account-number').textContent = data.accountNumber || 'N/A'; document.getElementById('account-holder').textContent = data.accountHolder || 'N/A';
                 
-                // THÊM: Ẩn/hiện dòng VAT một cách linh động
                 const vatAmountValue = parseFloat(cleanNumberString(data.vatAmount)) || 0;
                 const vatRow = document.getElementById('vat-row');
-                if (vatAmountValue > 0) {
-                    vatRow.style.display = 'flex'; // Hoặc 'block' tùy vào CSS của bạn, 'flex' là đúng trong trường hợp này
-                } else {
-                    vatRow.style.display = 'none';
-                }
+                vatRow.style.display = vatAmountValue > 0 ? '' : 'none';
 
                 displayProducts(data.productsJson); displayOrderQRCode(data.orderNumber);
                 return updateQRCode(cleanNumberString(data.totalAfterVat), data.orderNumber, bankCode, data.accountNumber, data.accountHolder);
@@ -371,7 +347,7 @@
         }
 
         function changeFormat(format) {
-            document.body.classList.remove('format-80mm', 'format-a4', 'format-a5');
+            document.body.className = '';
             document.body.classList.add('format-' + format);
 
             const totalsLabels = document.querySelectorAll('.totals-box .total-row > span:first-child');
@@ -395,6 +371,7 @@
                     let newLabel = label.dataset.originalText;
                     if (newLabel.includes('Thành Tiền:')) newLabel = 'Thành<br>Tiền:';
                     if (newLabel.includes('Tổng Tiền Sau Chiết Khấu:')) newLabel = 'Tổng Tiền<br>Sau CK:';
+                    if (newLabel.includes('VAT')) newLabel = 'VAT:';
                     if (newLabel.includes('Phải Thanh Toán:')) newLabel = 'TỔNG CỘNG:';
                     label.innerHTML = newLabel;
                 });
@@ -412,7 +389,7 @@
             const loader = document.getElementById('loading-overlay');
             const container = document.getElementById('bill-container');
             const formatFromUrl = getUrlParameter('format');
-            const initialFormat = ['80mm', 'a4', 'a5'].includes(formatFromUrl) ? formatFromUrl : 'a4'; // Default to A4 now
+            const initialFormat = ['80mm', 'a4', 'a5'].includes(formatFromUrl) ? formatFromUrl : 'a4';
 
             try {
                 await (window.location.search.length > 1 ? loadDataFromUrl() : loadDemoData());

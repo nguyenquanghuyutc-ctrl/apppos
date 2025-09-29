@@ -105,11 +105,13 @@
         .format-a4 .products-table { font-size: 0.9em; }
         .format-a4 .products-table th, .format-a4 .products-table td { padding: 8px 10px; }
         .format-a4 .bottom-section { margin-top: 20px; gap: 30px; }
-        .format-a4 .qr-code img { width: 140px; height: 140px; }
+        /* KHÔI PHỤC: Ẩn QR code thanh toán trên A4 */
+        .format-a4 .payment-section { display: none; }
         .format-a4 .total-row, .format-a4 .total-final { padding: 10px; }
         .format-a4 .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 0.9em; color: #777; }
         
         /* === SIGNATURES SECTION === */
+        /* KHÔI PHỤC: Mặc định ẩn, chỉ hiện trên A4 */
         .signatures-section { display: none; } 
         .format-a4 .signatures-section { display: flex; justify-content: space-around; text-align: center; margin-top: 40px; padding-bottom: 20px; z-index: 2; position: relative; }
         .signature-box { min-height: 90px; }
@@ -216,7 +218,8 @@
                 </div>
             </div>
         </div>
-
+        
+        <!-- KHÔI PHỤC: Phần Chữ Ký -->
         <div class="signatures-section">
             <div class="signature-box">
                 <div class="signature-title">XUẤT KHO</div>
